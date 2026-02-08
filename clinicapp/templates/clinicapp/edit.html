@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Appointment</title>
+
+    <link rel="stylesheet" href="{% static 'clinicapp/style.css' %}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Edit Appointment</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <label>Patient</label>
+        <select name="patient">
+            {% for p in patients %}
+                <option value="{{ p.id }}"
+                {% if p.id == appointment.patient.id %}selected{% endif %}>
+                    {{ p.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Doctor</label>
+        <select name="doctor">
+            {% for d in doctors %}
+                <option value="{{ d.id }}"
+                {% if d.id == appointment.doctor.id %}selected{% endif %}>
+                    {{ d.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Date</label>
+        <input type="date" name="date" value="{{ appointment.date }}">
+
+        <label>Time</label>
+        <input type="time" name="time" value="{{ appointment.time }}">
+
+        <button type="submit">Update</button>
+
+        <a href="/" class="btn-cancel">Cancel</a>
+
+    </form>
+
+</div>
+
+</body>
+</html>
