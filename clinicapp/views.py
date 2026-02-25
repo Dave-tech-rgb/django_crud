@@ -1,98 +1,41 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Patient, Doctor, Appointment
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from rest_framework import viewsets
+from .models import Doctor, Patient, Appointment
+from .serializers import DoctorSerializer, PatientSerializer, AppointmentSerializer
 
+# --- Web Views (HTML) ---
+class AppointmentListView(ListView):
+    model = Appointment
+    template_name = 'appointments/appointment_list.html'
+    context_object_name = 'appointments'
 
-def appointment_list(request):
-    appointments = Appointment.objects.select_related('patient', 'doctor')
-    return render(request, 'clinicapp/appointments.html', {
-        'appointments': appointments
-    })
+class AppointmentCreateView(CreateView):
+    model = Appointment
+    fields = ['doctor', 'patient', 'date_time', 'reason']
+    template_name = 'appointments/appointment_form.html'
+    success_url = reverse_lazy('appointment_list')
 
+class AppointmentUpdateView(UpdateView):
+    model = Appointment
+    fields = ['doctor', 'patient', 'date_time', 'reason']
+    template_name = 'appointments/appointment_form.html'
+    success_url = reverse_lazy('appointment_list')
 
-def add_appointment(request):
-    if request.method == "POST":
+class AppointmentDeleteView(DeleteView):
+    model = Appointment
+    template_name = 'appointments/appointment_confirm_delete.html'
+    success_url = reverse_lazy('appointment_list')
 
-        patient_id = request.POST.get('patient')
-        doctor_id = request.POST.get('doctor')
+# --- API Views (JSON) ---
+class DoctorViewSet(viewsets.ModelViewSet):
+    queryset = Doctor.objects.all()
+    serializer_class = DoctorSerializer
 
-        new_patient = request.POST.get('new_patient')
-        new_patient_age = request.POST.get('new_patient_age')
+class PatientViewSet(viewsets.ModelViewSet):
+    queryset = Patient.objects.all()
+    serializer_class = PatientSerializer
 
-        new_doctor = request.POST.get('new_doctor')
-
-        date = request.POST.get('date')
-        time = request.POST.get('time')
-
-        # -------- PATIENT --------
-        if new_patient:
-            try:
-                age = int(new_patient_age)
-            except (TypeError, ValueError):
-                age = 0
-
-            patient = Patient.objects.create(
-                name=new_patient,
-                age=age
-            )
-        else:
-            patient = get_object_or_404(Patient, id=patient_id)
-
-        # -------- DOCTOR --------
-        if new_doctor:
-            doctor = Doctor.objects.create(name=new_doctor)
-        else:
-            doctor = get_object_or_404(Doctor, id=doctor_id)
-
-        # -------- APPOINTMENT --------
-        Appointment.objects.create(
-            patient=patient,
-            doctor=doctor,
-            date=date,
-            time=time
-        )
-
-        return redirect('/')
-
-    patients = Patient.objects.all()
-    doctors = Doctor.objects.all()
-
-    return render(request, 'clinicapp/add.html', {
-        'patients': patients,
-        'doctors': doctors
-    })
-
-
-def delete_appointment(request, id):
-    appt = get_object_or_404(Appointment, id=id)
-    appt.delete()
-    return redirect('/')
-
-def edit_appointment(request, id):
-
-    appointment = get_object_or_404(Appointment, id=id)
-
-    if request.method == "POST":
-
-        patient_id = request.POST.get('patient')
-        doctor_id = request.POST.get('doctor')
-
-        date = request.POST.get('date')
-        time = request.POST.get('time')
-
-        appointment.patient = get_object_or_404(Patient, id=patient_id)
-        appointment.doctor = get_object_or_404(Doctor, id=doctor_id)
-        appointment.date = date
-        appointment.time = time
-
-        appointment.save()
-
-        return redirect('/')
-
-    patients = Patient.objects.all()
-    doctors = Doctor.objects.all()
-
-    return render(request, 'clinicapp/edit.html', {
-        'appointment': appointment,
-        'patients': patients,
-        'doctors': doctors
-    })
+class AppointmentViewSet(viewsets.ModelViewSet):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
